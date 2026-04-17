@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>검정고시 영어 학습</title>
+    <style>
+        body { margin: 0; padding: 20px; font-family: sans-serif; text-align: center; background-color: #f9f9f9; }
+        
+        /* 시작 화면 레이어 */
+        #start-overlay {
+            position: fixed; top:0; left:0; width:100%; height:100%; 
+            background: rgba(255,255,255,0.95); z-index: 100;
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        .btn-start {
+            padding: 50px 100px; font-size: 50px; font-weight: bold;
+            background-color: #0046ff; color: white; border: none; border-radius: 20px; cursor: pointer;
+        }
+
+        .main-box { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border: 3px solid #ccc; border-radius: 20px; }
+        
+        .word-eng { font-size: 80px; color: blue; font-weight: bold; margin: 20px 0; }
+        .word-kor { font-size: 50px; color: red; margin-bottom: 20px; }
+        
+        .img-box { width: 100%; height: 300px; background: #eee; margin-bottom: 20px; border-radius: 15px; overflow: hidden; }
+        .img-box img { width: 100%; height: 100%; object-fit: cover; }
+
+        .btn-audio { width: 100%; padding: 20px; font-size: 35px; background: #ffcc00; border: none; border-radius: 15px; cursor: pointer; margin-bottom: 20px; font-weight: bold; }
+        .nav-group { display: flex; gap: 10px; }
+        .btn-nav { flex: 1; padding: 20px; font-size: 30px; background: #4caf50; color: white; border: none; border-radius: 15px; cursor: pointer; }
+        .btn-nav:disabled { background: #ccc; }
+    </style>
+</head>
+<body>
+
+<div id="start-overlay">
+    <button class="btn-start" onclick="startApp()">공부 시작하기<br>(여기를 누르세요)</button>
+</div>
+
+<div class="main-box">
+    <div class="img-box">
+        <img id="pic" src="" alt="그림">
+    </div>
+    <div id="eng" class="word-eng">Word</div>
+    <div id="kor" class="word-kor">뜻</div>
+
+    <button class="btn-audio" onclick="play()">🔊 소리 듣기</button>
+
+    <div class="nav-group">
+        <button id="pBtn" class="btn-nav" onclick="move(-1)">이전</button>
+        <button id="nBtn" class="btn-nav" onclick="move(1)">다음</button>
+    </div>
+</div>
+
+<script>
+    const data = [
+        { e: "Apple", k: "사과", i: "https://cdn.pixabay.com/photo/2016/11/18/12/27/apple-1834114_1280.jpg" },
+        { e: "Book", k: "책", i: "https://cdn.pixabay.com/photo/2015/11/19/21/10/knowledge-1052010_1280.jpg" },
+        { e: "Sun", k: "태양", i: "https://cdn.pixabay.com/photo/2012/01/09/10/58/sun-11582_1280.jpg" }
+    ];
+
+    let idx = 0;
+
+    function startApp() {
+        document.getElementById('start-overlay').style.display = 'none';
+        render();
+    }
+
+    function render() {
+        const item = data[idx];
+        document.getElementById('eng').innerText = item.e;
+        document.getElementById('kor').innerText = item.k;
+        document.getElementById('pic').src = item.i;
+        
+        document.getElementById('pBtn').disabled = (idx === 0);
+        document.getElementById('nBtn').disabled = (idx === data.length - 1);
+    }
+
+    function play() {
+        // 음성 라이브러리가 준비되었는지 확인
+        if (!window.speechSynthesis) {
+            alert("이 브라우저는 음성을 지원하지 않습니다.");
+            return;
+        }
+        window.speechSynthesis.cancel(); // 겹침 방지
+        const msg = new SpeechSynthesisUtterance(data[idx].e);
+        msg.lang = 'en-US';
+        msg.rate = 0.7;
+        window.speechSynthesis.speak(msg);
+    }
+
+    function move(step) {
+        idx += step;
+        render();
+    }
+</script>
+
+</body>
+</html>
