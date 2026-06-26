@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MoHo</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Georgia,serif;background:#000;color:#eee;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.03) 0px,transparent 2px,transparent 4px);opacity:.15;pointer-events:none;z-index:1}
+
+.page { display: none; min-height: 100vh; }
+.active { display: block; }
+
+.hero{min-height: 100vh;padding:80px 8%;display:flex;align-items:center;position:relative;background:radial-gradient(circle at center,rgba(120,0,0,.25),transparent 35%),linear-gradient(135deg,#000,#180000,#000)}
+.fog{position:absolute;width:500px;height:220px;background:radial-gradient(circle,rgba(255,0,0,.12),transparent 70%);filter:blur(40px);animation:float 8s infinite alternate}
+.f1{top:10%;left:-10%}.f2{bottom:5%;right:-10%}
+@keyframes float{from{transform:translateX(0)}to{transform:translateX(80px)}}
+h1{font-size:clamp(4rem, 15vw, 10rem); letter-spacing:.2em; color:#c00; text-shadow:0 0 30px rgba(255,0,0,0.9); line-height:1; margin-bottom:20px; text-align: left;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(32px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.hero-title{animation:fadeUp 1s cubic-bezier(.2,.8,.2,1) both}
+.hero-sub{animation:fadeUp 1s cubic-bezier(.2,.8,.2,1) 0.35s both}
+.hero-btn{animation:fadeUp 1s cubic-bezier(.2,.8,.2,1) 0.6s both}
+
+p{color:#bbb;line-height:1.7;max-width:700px;margin:20px 0}
+.hero-sub p{font-size:1.35rem;color:#ccc;letter-spacing:.04em;margin:16px 0}
+.btn{display:inline-block;margin-top:10px;padding:14px 20px;border:1px solid #700;color:#eee;text-decoration:none;background:#100;transition:.3s;cursor:pointer;font-family:inherit}
+.btn:hover{background:#300}
+.btn-hero{padding:12px 28px;font-size:0.95rem;letter-spacing:.15em;border:1px solid #900;}
+
+.section{padding:80px 8%}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;margin-top:40px}
+.card{background:#0a0a0a;border:1px solid #400;padding:24px;border-radius:18px;box-shadow:0 0 25px rgba(255,0,0,.15);transition:.3s}
+.card:hover{transform:translateY(-6px) scale(1.02);border-color:#a00}
+.card h3{color:#e33;margin-bottom:10px}
+
+.test-wrap{max-width:760px;margin:40px auto}
+.test-card{background:linear-gradient(180deg,#0d0d0d,#090909);border:1px solid #5a1a1a;padding:30px;border-radius:22px;box-shadow:0 0 35px rgba(120,0,0,.22)}
+.test-title{font-size:1.6rem;color:#ff4a4a;margin-bottom:8px}
+.helper{color:#9d8d8d;margin-bottom:14px}
+select{width:100%;padding:14px 16px;background:linear-gradient(180deg,#130909,#0b0b0b);color:#eee;border:1px solid #5a1a1a;border-radius:14px;outline:none;font-size:1rem;appearance:none;margin:10px 0 18px}
+label{display:block;color:#f0d7d7;font-size:.95rem;letter-spacing:.08em;margin-top:8px}
+.btn-main{width:100%;padding:16px;border-radius:14px;font-weight:700;letter-spacing:.12em;background:linear-gradient(180deg,#5c1111,#2d0909);border:1px solid #8a2020;color:#eee;cursor:pointer;margin-top:10px}
+
+/* ── 키워드 태그 선택 UI ── */
+.keyword-section { margin-top: 8px; margin-bottom: 4px; }
+.keyword-label { display: block; color: #f0d7d7; font-size:.95rem; letter-spacing:.08em; margin-bottom: 10px; }
+.keyword-groups { display: flex; flex-direction: column; gap: 12px; }
+.keyword-group { display: flex; flex-direction: column; gap: 6px; }
+.keyword-group-title { font-size: 0.72rem; color: #666; letter-spacing: .15em; text-transform: uppercase; padding-left: 2px; }
+.keyword-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.kw-tag {
+    display: inline-block;
+    padding: 6px 14px;
+    border: 1px solid #3a1010;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    color: #aaa;
+    background: #0d0505;
+    cursor: pointer;
+    transition: all .18s ease;
+    font-family: Georgia, serif;
+    user-select: none;
+    letter-spacing: .04em;
+}
+.kw-tag:hover { border-color: #7a1a1a; color: #ddd; background: #1a0808; }
+.kw-tag.selected {
+    border-color: #c03030;
+    color: #ff6b6b;
+    background: #2d0909;
+    box-shadow: 0 0 10px rgba(200,0,0,.25);
+}
+.keyword-clear { font-size: 0.75rem; color: #555; cursor: pointer; margin-left: 8px; text-decoration: underline; transition: color .15s; }
+.keyword-clear:hover { color: #c00; }
+.keyword-hint { font-size: 0.78rem; color: #555; margin-top: 6px; font-style: italic; }
+
+#result{margin-top:24px;padding-top:18px;border-top:1px solid #331111}
+.meter{height:10px;background:#1a1a1a;border-radius:999px;overflow:hidden;margin:12px 0}
+.fill{height:100%;background:linear-gradient(90deg,#7a1111,#ff3b3b);width:0;transition:width 1s ease-out}
+.poster-container { position: relative; width: 100%; max-width: 220px; margin: 12px auto; }
+.poster{width:100%; height:300px; object-fit:cover; border-radius:12px; display:block; border:1px solid #300; background:#111;}
+.media-tag { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.85); padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; color: #ff4a4a; border: 1px solid #5a1a1a; font-weight: bold;}
+
+#result h4{font-size:2rem;color:#ff4444;margin:10px 0;text-align:center}
+.meta{color:#999;margin-top:10px;font-size:0.9rem; text-align: center;}
+
+.slider-wrap{overflow:hidden;position:relative}
+.slider-track{display:flex;transition:transform 0.4s cubic-bezier(.4,0,.2,1)}
+.slide{min-width:100%;box-sizing:border-box}
+.slider-nav{display:flex;align-items:center;justify-content:space-between;margin-top:16px}
+.slider-btn{background:none;border:1px solid #5a1a1a;color:#ff4a4a;font-size:1.2rem;padding:8px 18px;border-radius:8px;cursor:pointer;transition:.2s;font-family:inherit}
+.slider-btn:hover{background:#1a0000;border-color:#a00}
+.slide-counter{color:#666;font-size:0.85rem;letter-spacing:.1em}
+
+.genre-card{cursor:pointer;}
+.genre-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:24px}
+.gcard{background:#0d0a0a;border:1px solid #3a1010;border-radius:16px;overflow:hidden;transition:.3s;display:flex;flex-direction:column}
+.gcard:hover{transform:translateY(-4px);border-color:#a00;box-shadow:0 0 30px rgba(255,0,0,.15)}
+.gcard-poster{width:100%;aspect-ratio:2/3;object-fit:cover;display:block;background:#111;}
+.gcard-body{padding:16px;flex:1;display:flex;flex-direction:column;gap:8px}
+.gcard-title{font-size:1.1rem;color:#ff4a4a;font-weight:bold;line-height:1.3}
+.gcard-desc{color:#999;font-size:0.85rem;line-height:1.6;flex:1}
+.gcard-keywords{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.gcard-tag{font-size:0.72rem;color:#c44;background:#1a0505;border:1px solid #3a1010;padding:3px 8px;border-radius:4px}
+.gcard-meta{display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:8px;border-top:1px solid #1a0505}
+.gcard-rating{color:#ffb347;font-size:0.85rem;font-weight:bold}
+.gcard-ott{display:flex;gap:6px;flex-wrap:wrap}
+.ott-badge{font-size:0.7rem;background:#111;border:1px solid #444;color:#aaa;padding:2px 7px;border-radius:3px}
+.genre-loading{color:#666;text-align:center;padding:60px 0;font-size:1rem;letter-spacing:.1em}
+
+/* 키워드 매칭 배지 */
+.kw-match-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    color: #ff6b6b;
+    background: #1a0505;
+    border: 1px solid #5a1a1a;
+    border-radius: 3px;
+    padding: 2px 6px;
+    margin-right: 4px;
+}
+
+/* ── 광고 배너 (메인 히어로 ~ 장르 섹션 사이) ── */
+.ad-banner-section {
+    padding: 0 8%;
+    background: #000;
+}
+.ad-banner-label {
+    font-size: 0.68rem;
+    color: #444;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.ad-banner-label::before, .ad-banner-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #1a1a1a;
+}
+.ad-banner-track {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+}
+.ad-banner-track::-webkit-scrollbar { display: none; }
+.ad-banner-card {
+    flex: 0 0 320px;
+    background: linear-gradient(135deg, #0d0505, #110808);
+    border: 1px solid #2a1010;
+    border-radius: 14px;
+    padding: 20px 22px;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color .2s, box-shadow .2s;
+    text-decoration: none;
+}
+.ad-banner-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 80% 50%, rgba(180,0,0,.08), transparent 65%);
+    pointer-events: none;
+}
+.ad-banner-card:hover { border-color: #6a1a1a; box-shadow: 0 0 20px rgba(180,0,0,.12); }
+.ad-banner-thumb {
+    width: 60px;
+    height: 84px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #3a1010;
+    flex-shrink: 0;
+    background: #111;
+}
+.ad-banner-body { flex: 1; min-width: 0; }
+.ad-banner-sponsor {
+    font-size: 0.65rem;
+    color: #555;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+.ad-banner-title {
+    font-size: 1rem;
+    color: #e33;
+    font-weight: bold;
+    line-height: 1.3;
+    margin-bottom: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ad-banner-copy {
+    font-size: 0.78rem;
+    color: #888;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.ad-banner-cta {
+    font-size: 0.72rem;
+    color: #c03;
+    margin-top: 8px;
+    letter-spacing: .08em;
+}
+.ad-pill {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    font-size: 0.6rem;
+    color: #444;
+    background: #0a0a0a;
+    border: 1px solid #222;
+    padding: 2px 6px;
+    border-radius: 3px;
+    letter-spacing: .1em;
+}
+
+/* ── 장르 페이지 광고 핀 카드 ── */
+.gcard.ad-pinned {
+    border-color: #4a1a1a;
+    background: linear-gradient(180deg, #110808, #0d0505);
+    position: relative;
+}
+.gcard.ad-pinned::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    box-shadow: inset 0 0 0 1px rgba(200,0,0,.12);
+    pointer-events: none;
+}
+.ad-pin-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.65rem;
+    color: #555;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    padding: 8px 16px 0;
+}
+.ad-pin-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #6a1a1a;
+    flex-shrink: 0;
+}
+.ad-pin-sponsor {
+    font-size: 0.68rem;
+    color: #5a2a2a;
+    letter-spacing: .1em;
+    margin-top: 2px;
+}
+</style>
+</head>
+<body>
+
+<div id="main-page" class="page active">
+    <section class="hero">
+        <div class="fog f1"></div><div class="fog f2"></div>
+        <div>
+            <h1 class="hero-title">MoHo</h1>
+            <div class="hero-sub"><p>Whatever you fear, it's here.</p></div>
+            <div class="hero-btn"><button class="btn btn-hero" onclick="goToPage('test-page')">Start</button></div>
+        </div>
+    </section>
+
+    <!-- ── 광고 배너 영역 ── -->
+    <div class="ad-banner-section" style="padding-top:48px; padding-bottom:48px;">
+        <div class="ad-banner-label">광고</div>
+        <div class="ad-banner-track" id="ad-banner-track"></div>
+    </div>
+
+    <section class="section">
+        <h2 style="color:#e33;margin-bottom:20px;font-size:2rem;">장르별 추천</h2>
+        <div class="grid">
+            <div class="card genre-card" onclick="goToGenre('영화')"><h3>호러 영화</h3><p>새벽 2시에 보면 후회할 작품 선별.</p></div>
+            <div class="card genre-card" onclick="goToGenre('드라마')"><h3>드라마 / 시리즈</h3><p>몰입감 있게 밤새 보게 되는 공포 시리즈.</p></div>
+            <div class="card genre-card" onclick="goToGenre('애니')"><h3>애니메이션 호러</h3><p>기괴한 작화와 심리 압박이 강한 작품.</p></div>
+            <div class="card genre-card" onclick="goToGenre('게임')"><h3>공포게임</h3><p>당신을 잠 못 들게 할 생존 공포 게임 추천.</p></div>
+            <div class="card genre-card" onclick="goToGenre('웹툰/만화')"><h3>웹툰 / 만화</h3><p>스크롤 내릴수록 심장이 식는 작품들.</p></div>
+            <div class="card genre-card" onclick="goToGenre('괴담글')"><h3>괴담글</h3><p>실화처럼 읽히는 도시전설과 심령 체험담.</p></div>
+            <div class="card genre-card" onclick="goToGenre('소설')"><h3>호러 소설</h3><p>읽을수록 무너지는 심리 스릴러.</p></div>
+        </div>
+    </section>
+</div>
+
+<div id="test-page" class="page">
+    <section class="section">
+        <div style="margin-bottom: 20px;">
+            <button class="btn" onclick="goToPage('main-page')">← 뒤로 가기</button>
+        </div>
+        
+        <div class="test-wrap">
+            <div class="test-card">
+                <div class="test-title">Find Your Horror</div>
+                <div class="helper">심연 속에서 당신만을 위한 공포 파일을 추출합니다.</div>
+                
+                <label>무엇이 더 무서운가?</label>
+                <select id="fear"><option value="any">상관없음</option><option>귀신</option><option>사람</option><option>알 수 없는 존재</option></select>
+                
+                <label>원하는 매체</label>
+                <select id="media"><option value="any">상관없음</option><option>영화</option><option>게임</option><option>책</option><option>괴담글</option><option>드라마</option><option>웹툰</option><option>만화</option><option>애니</option></select>
+                
+                <label>고어 정도</label>
+                <select id="gore"><option value="any">상관없음</option><option>약함</option><option>보통</option><option>강함</option></select>
+                
+                <label>공포도</label>
+                <select id="scare"><option value="any">상관없음</option><option>가볍게</option><option>무섭게</option><option>극한으로</option></select>
+                
+                <label>점프스케어 정도</label>
+                <select id="jump"><option value="any">상관없음</option><option>거의 없음</option><option>적당함</option><option>많음</option></select>
+
+                <label>여유 시간 (최소 러닝타임)</label>
+                <select id="runtime">
+                    <option value="0">상관없음</option>
+                    <option value="30">30분 이상</option>
+                    <option value="60">1시간 이상</option>
+                    <option value="90">1시간 30분 이상</option>
+                    <option value="120">2시간 이상</option>
+                    <option value="150">2시간 30분 이상</option>
+                    <option value="180">3시간 이상</option>
+                </select>
+
+                <!-- ── 키워드 필터 ── -->
+                <div class="keyword-section">
+                    <span class="keyword-label">
+                        키워드로 좁히기
+                        <span class="keyword-clear" onclick="clearKeywords()">초기화</span>
+                    </span>
+                    <div class="keyword-groups">
+                        <div class="keyword-group">
+                            <div class="keyword-group-title">소재 · 배경</div>
+                            <div class="keyword-tags" id="kwg-setting">
+                                <span class="kw-tag" data-kw="가족">가족</span>
+                                <span class="kw-tag" data-kw="학교">학교</span>
+                                <span class="kw-tag" data-kw="고립">고립</span>
+                                <span class="kw-tag" data-kw="여행">여행</span>
+                                <span class="kw-tag" data-kw="해외">해외</span>
+                                <span class="kw-tag" data-kw="정신병원">정신병원</span>
+                                <span class="kw-tag" data-kw="저택">저택</span>
+                                <span class="kw-tag" data-kw="숲">숲</span>
+                                <span class="kw-tag" data-kw="저주">저주</span>
+                                <span class="kw-tag" data-kw="컬트">컬트</span>
+                                <span class="kw-tag" data-kw="오컬트">오컬트</span>
+                            </div>
+                        </div>
+                        <div class="keyword-group">
+                            <div class="keyword-group-title">사건 · 서사</div>
+                            <div class="keyword-tags" id="kwg-plot">
+                                <span class="kw-tag" data-kw="반전">반전</span>
+                                <span class="kw-tag" data-kw="복수">복수</span>
+                                <span class="kw-tag" data-kw="감금">감금</span>
+                                <span class="kw-tag" data-kw="실화기반">실화기반</span>
+                                <span class="kw-tag" data-kw="실화">실화</span>
+                                <span class="kw-tag" data-kw="연쇄살인">연쇄살인</span>
+                                <span class="kw-tag" data-kw="도시전설">도시전설</span>
+                                <span class="kw-tag" data-kw="타임루프">타임루프</span>
+                                <span class="kw-tag" data-kw="도플갱어">도플갱어</span>
+                            </div>
+                        </div>
+                        <div class="keyword-group">
+                            <div class="keyword-group-title">분위기 · 연출</div>
+                            <div class="keyword-tags" id="kwg-mood">
+                                <span class="kw-tag" data-kw="분위기공포">분위기</span>
+                                <span class="kw-tag" data-kw="심리공포">심리공포</span>
+                                <span class="kw-tag" data-kw="점프스케어">점프스케어</span>
+                                <span class="kw-tag" data-kw="고어">고어</span>
+                                <span class="kw-tag" data-kw="페이크다큐">페이크다큐</span>
+                                <span class="kw-tag" data-kw="앤솔로지">앤솔로지</span>
+                                <span class="kw-tag" data-kw="장편">장편</span>
+                                <span class="kw-tag" data-kw="명작">명작</span>
+                            </div>
+                        </div>
+                        <div class="keyword-group">
+                            <div class="keyword-group-title">인물 · 관계</div>
+                            <div class="keyword-tags" id="kwg-character">
+                                <span class="kw-tag" data-kw="집착">집착</span>
+                                <span class="kw-tag" data-kw="스토킹">스토킹</span>
+                                <span class="kw-tag" data-kw="광기">광기</span>
+                                <span class="kw-tag" data-kw="살인마">살인마</span>
+                                <span class="kw-tag" data-kw="협동">협동</span>
+                                <span class="kw-tag" data-kw="생존">생존</span>
+                                <span class="kw-tag" data-kw="1인칭">1인칭</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="keyword-hint" id="kw-hint"></div>
+                </div>
+                
+                <button class="btn-main" onclick="recommendWork()">파일 분석 및 추출</button>
+                <div id="result"></div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<div id="genre-page" class="page">
+    <section class="section">
+        <div style="margin-bottom:24px;display:flex;align-items:center;gap:16px;">
+            <button class="btn" onclick="goToPage('main-page')">← 뒤로 가기</button>
+            <h2 id="genre-page-title" style="color:#e33;font-size:1.8rem;"></h2>
+        </div>
+        <div id="genre-list" class="genre-grid"></div>
+    </section>
+</div>
+
+<footer>
+    <p>오늘 밤은 평범하게 끝나지 않을 겁니다.</p>
+</footer>
+
+<script>
+const db=[
+    // ── 귀신 ──
+    {fear:'귀신', media:'영화', title:'주온', desc:'조용히 스며드는 일본형 저주 공포. 탈출도, 이유도 없다.', img:'', runtime:92, keywords:['저주','일본호러','귀신','분위기공포']},
+    {fear:'귀신', media:'영화', title:'컨저링', desc:'실화 기반의 악령 퇴마 공포. 클래식의 완성형.', img:'', runtime:112, keywords:['악령','퇴마','실화기반','점프스케어']},
+    {fear:'귀신', media:'영화', title:'링', desc:'7일 후 죽는다. 저주받은 비디오테이프의 공포.', img:'', runtime:96, keywords:['저주','일본호러','심리공포','고전']},
+    {fear:'귀신', media:'영화', title:'곤지암', desc:'정신병원 리얼리티 촬영팀이 마주한 실제 공포. 페이크다큐 형식.', img:'', runtime:95, keywords:['한국호러','페이크다큐','귀신','정신병원']},
+    {fear:'귀신', media:'영화', title:'검은 사제들', desc:'한국형 엑소시즘. 빙의된 소녀와 두 사제의 사투.', img:'', runtime:107, keywords:['한국호러','엑소시즘','빙의','오컬트']},
+    {fear:'귀신', media:'영화', title:'장화, 홍련', desc:'아름다운 영상 속 숨겨진 가족의 비밀과 원혼.', img:'', runtime:115, keywords:['한국호러','심리공포','원혼','가족']},
+    {fear:'귀신', media:'영화', title:'엑소시스트', desc:'신부와 악마의 격돌. 공포 영화의 원형이 된 고전.', img:'', runtime:122, keywords:['고전','악마','빙의','엑소시즘']},
+    {fear:'귀신', media:'영화', title:'파라노말 액티비티', desc:'가정집에 설치된 카메라가 포착한 귀신. 일상이 공포가 된다.', img:'', runtime:86, keywords:['페이크다큐','귀신','일상공포','저예산']},
+    {fear:'귀신', media:'영화', title:'인시디어스', desc:'아이의 영혼이 유체이탈 중 붙잡힌다. 저편 세계의 존재들.', img:'', runtime:103, keywords:['귀신','유체이탈','초자연','점프스케어']},
+    {fear:'귀신', media:'드라마', title:'힐 하우스의 유령', desc:'저택에 얽힌 가족의 트라우마와 유령이 교차하는 심리 공포.', img:'', runtime:55, keywords:['넷플릭스','심리공포','유령','가족','저택']},
+    {fear:'귀신', media:'드라마', title:'블라이 저택 이야기', desc:'가정교사가 마주하는 저택의 유령들. 사랑과 집착이 뒤엉킨 공포.', img:'', runtime:55, keywords:['넷플릭스','유령','저택','분위기공포']},
+    {fear:'귀신', media:'드라마', title:'미드나잇 미사', desc:'외딴 섬 마을에 나타난 신부가 일으키는 기적과 저주.', img:'', runtime:60, keywords:['넷플릭스','종교','저주','흡혈귀','고립']},
+    {fear:'귀신', media:'드라마', title:'기묘한 이야기', desc:'80년대 감성 속 초자연적 존재와 마주한 아이들.', img:'', runtime:50, keywords:['넷플릭스','초자연','80년대','모험']},
+    {fear:'귀신', media:'게임', title:'파스모포비아', desc:'협동으로 유령을 조사하는 공포게임.', img:'https://i.postimg.cc/053XKrdd/phasmophobia.jpg', runtime:60, keywords:['협동','유령조사','VR지원','인디']},
+    {fear:'귀신', media:'게임', title:'레지던트 이블 7', desc:'폐가에 갇힌 생존 공포. 1인칭 시점이 극한의 몰입감을 준다.', img:'', runtime:600, keywords:['생존','1인칭','VR지원','고어','가족']},
+    {fear:'귀신', media:'게임', title:'사일런트 힐 2', desc:'안개 낀 도시, 내면의 죄책감이 만들어낸 존재들과의 조우.', img:'', runtime:480, keywords:['심리공포','명작','분위기공포','괴물']},
+    {fear:'귀신', media:'애니', title:'지옥소녀', desc:'원한이 있는 자를 지옥으로 보내는 소녀. 옴니버스 형식의 저주 앤솔로지.', img:'', runtime:24, keywords:['저주','앤솔로지','다크','복수']},
+    {fear:'귀신', media:'애니', title:'코랄리아 (쿠로이이에)', desc:'죽은 아이의 혼이 깃든 낡은 집. 일본식 저주와 유령의 농밀한 공포.', img:'', runtime:24, keywords:['일본호러','유령','저주','분위기공포']},
+    {fear:'귀신', media:'웹툰', title:'기기괴괴', desc:'기괴하고 찝찝한 옴니버스 도시 괴담.', img:'https://i.postimg.cc/7PctJbn4/gigigoegoe.jpg', runtime:0, keywords:['앤솔로지','도시전설','한국','찝찝함']},
+
+    // ── 사람 ──
+    {fear:'사람', media:'영화', title:'오펀: 천사의 비밀', desc:'가족 안으로 들어온 가장 잔혹한 공포.', img:'', runtime:123, keywords:['반전','심리공포','가족','스릴러']},
+    {fear:'사람', media:'영화', title:'미저리', desc:'광적인 팬에게 감금된 작가. 구원이 오히려 지옥이 된다.', img:'', runtime:107, keywords:['감금','스티븐킹','심리공포','집착']},
+    {fear:'사람', media:'영화', title:'할로윈 (1978)', desc:'이유 없이 죽이는 남자. 설명 불가한 악의 시작.', img:'', runtime:91, keywords:['슬래셔','고전','살인마','연쇄살인']},
+    {fear:'사람', media:'영화', title:'텍사스 전기톱 학살', desc:'황량한 도로, 살인마 가족. 도망칠 곳이 없다.', img:'', runtime:83, keywords:['슬래셔','고어','고전','살인마','가족','여행']},
+    {fear:'사람', media:'영화', title:'겟 아웃', desc:'백인 가족의 별장 초대. 미소 뒤에 숨겨진 잔혹한 진실.', img:'', runtime:104, keywords:['사회공포','반전','인종','심리공포']},
+    {fear:'사람', media:'영화', title:'더 스트레인저스', desc:'문을 두드리는 낯선 이들. 이유 없는 폭력의 공포.', img:'', runtime:86, keywords:['홈인베이전','실화기반','극한공포','생존']},
+    {fear:'사람', media:'드라마', title:'아메리칸 호러 스토리', desc:'살인마, 유령, 컬트까지. 시즌마다 다른 테마의 극한 공포 앤솔로지.', img:'', runtime:60, keywords:['앤솔로지','컬트','고어']},
+    {fear:'사람', media:'드라마', title:'데이머: 몬스터', desc:'밀워키 연쇄살인마 제프리 다머의 실화. 평범한 얼굴의 괴물.', img:'', runtime:55, keywords:['실화','연쇄살인','넷플릭스','심리공포']},
+    {fear:'사람', media:'드라마', title:'유 (YOU)', desc:'사랑이라는 이름으로 집착하고 살인하는 남자의 내면.', img:'', runtime:45, keywords:['스토킹','넷플릭스','집착','심리공포','연쇄살인']},
+    {fear:'사람', media:'게임', title:'아웃라스트', desc:'정신병원에서 벌어지는 극한의 생존 공포.', img:'https://i.postimg.cc/J7gYHtcQ/outlast.jpg', runtime:300, keywords:['생존','고어','정신병원','도망']},
+    {fear:'사람', media:'게임', title:'맨 오브 메단', desc:'유령선 위, 다섯 명의 생존을 가르는 선택들.', img:'', runtime:300, keywords:['선택지','협동','생존','분기엔딩','여행']},
+    {fear:'사람', media:'웹툰', title:'타인은 지옥이다', desc:'고시원 사람들의 섬뜩한 눈빛과 광기.', img:'https://i.postimg.cc/yYZQmBL6/tain-eunjiog-ida.jpg', runtime:0, keywords:['한국','심리공포','인간혐오','현실공포','광기']},
+    {fear:'사람', media:'책', title:'샤이닝', desc:'서서히 미쳐가는 인간의 광기.', img:'https://i.postimg.cc/CMtrndsy/syaining.jpg', runtime:0, keywords:['스티븐킹','심리공포','광기','고립','가족']},
+    {fear:'사람', media:'책', title:'검은 집', desc:'인간의 내면 깊은 곳의 악을 마주하다.', img:'https://i.postimg.cc/053XKrd0/geom-eunjib.jpg', runtime:0, keywords:['한국소설','심리공포','연쇄살인','반전']},
+    {fear:'사람', media:'애니', title:'Monster', desc:'완벽한 의사가 쫓는 한 살인마. 인간이 만들어낸 악의 계보.', img:'', runtime:24, keywords:['심리공포','연쇄살인','명작','긴장감']},
+    {fear:'사람', media:'애니', title:'페르소나: 트리니티 소울', desc:'인격이 분열되는 공포. 내면의 그림자가 현실을 침범한다.', img:'', runtime:24, keywords:['심리공포','페르소나','광기','초자연']},
+
+    // ── 알 수 없는 존재 ──
+    {fear:'알 수 없는 존재', media:'영화', title:'유전', desc:'대물림되는 저주와 피할 수 없는 파멸.', img:'', runtime:127, keywords:['오컬트','가족','분위기공포','충격엔딩']},
+    {fear:'알 수 없는 존재', media:'영화', title:'미드소마', desc:'한낮의 태양 아래 펼쳐지는 이교도 제의. 밝을수록 더 무섭다.', img:'', runtime:148, keywords:['컬트','이교도','이색공포','고어','여행','해외']},
+    {fear:'알 수 없는 존재', media:'영화', title:'더 위치', desc:'17세기 청교도 가족을 잠식하는 숲속의 존재.', img:'', runtime:92, keywords:['마녀','분위기공포','고립','숲','가족']},
+    {fear:'알 수 없는 존재', media:'영화', title:'어스', desc:'나 자신의 복제가 나를 죽이러 온다. 정체불명의 공포.', img:'', runtime:116, keywords:['도플갱어','사회공포','반전','오리지널']},
+    {fear:'알 수 없는 존재', media:'영화', title:'콰이어트 플레이스', desc:'소리를 내면 죽는다. 침묵 속의 공포.', img:'', runtime:90, keywords:['괴물','침묵','생존','가족']},
+    {fear:'알 수 없는 존재', media:'영화', title:'서스페리아 (2018)', desc:'베를린 무용 학교를 지배하는 고대 마녀의 의식.', img:'', runtime:152, keywords:['마녀','오컬트','분위기공포','고어','해외','컬트']},
+    {fear:'알 수 없는 존재', media:'영화', title:'안나벨', desc:'인형에 깃든 악령. 존재의 이유조차 설명되지 않는 공포.', img:'', runtime:99, keywords:['악령','오컬트','점프스케어']},
+    {fear:'알 수 없는 존재', media:'영화', title:'더 씽 (1982)', desc:'남극 기지, 무엇이든 될 수 있는 외계 생명체. 아무도 믿을 수 없다.', img:'', runtime:109, keywords:['SF공포','고전','고립','해외']},
+    {fear:'알 수 없는 존재', media:'드라마', title:'어둠 속으로 (Dark)', desc:'시간이 뒤엉키는 독일 마을. 존재 자체가 불가해한 공포.', img:'', runtime:60, keywords:['넷플릭스','타임루프','해외','미스터리']},
+    {fear:'알 수 없는 존재', media:'드라마', title:'카비넷 오브 큐리오시티', desc:'기예르모 델 토로가 선택한 8편의 공포 단편. 설명 불가한 존재들의 향연.', img:'', runtime:60, keywords:['넷플릭스','앤솔로지','크리쳐','델토로']},
+    {fear:'알 수 없는 존재', media:'드라마', title:'힐 하우스의 유령 (어둠)', desc:'저택 깊은 곳의 문 너머에 있는 것. 설명되지 않는 존재의 공포.', img:'', runtime:55, keywords:['넷플릭스','저택','심리공포','초자연']},
+    {fear:'알 수 없는 존재', media:'애니', title:'Another', desc:'학교에 퍼지는 죽음의 저주와 미스터리.', img:'https://i.postimg.cc/5yZshk2Q/Another.jpg', runtime:24, keywords:['저주','학교','미스터리','고어']},
+    {fear:'알 수 없는 존재', media:'애니', title:'Boogiepop wa Warawanai', desc:'존재 자체가 불명확한 무언가. 사라지는 사람들과 도시의 이면.', img:'', runtime:24, keywords:['미스터리','실험적','도시전설','불안']},
+    {fear:'알 수 없는 존재', media:'만화', title:'소용돌이', desc:'마을을 잠식하는 기괴한 소용돌이 패턴.', img:'https://i.postimg.cc/kXb1Q9TP/soyongdol-i.jpg', runtime:0, keywords:['이토준지','기괴','분위기공포','명작']},
+    {fear:'알 수 없는 존재', media:'게임', title:'SOMA', desc:'해저 기지에서 마주하는 실존적 공포.', img:'https://i.postimg.cc/053XKrdG/SOMA.jpg', runtime:480, keywords:['SF공포','고립','해외','분위기공포']},
+    {fear:'알 수 없는 존재', media:'게임', title:'앨런 웨이크 2', desc:'현실과 소설이 뒤섞이는 공포. 어둠 속 존재의 정체.', img:'', runtime:1200, keywords:['심리공포','메타픽션','명작','반전']},
+
+    // ── 괴담글 ──
+    {fear:'귀신', media:'괴담글', title:'원룸에서 겪은 귀신 썰', desc:'혼자 사는 원룸에서 3년간 겪은 실화. 읽다 보면 점점 소름이 돋는 괴미챈 금주의추천작.', img:'', runtime:0, keywords:['실화','귀신','고립'], url:'https://arca.live/b/spooky/109067566'},
+    {fear:'귀신', media:'괴담글', title:'빨간 마스크', desc:'밤길에 나타나 "나 예뻐?"라고 묻는 여자. 한국·일본을 동시에 뒤흔든 역대급 도시전설.', img:'', runtime:0, keywords:['도시전설','고전'], url:'https://namu.wiki/w/%EB%B9%A8%EA%B0%84%20%EB%A7%88%EC%8A%A4%ED%81%AC'},
+    {fear:'귀신', media:'괴담글', title:'홍콩할매 귀신', desc:'한국 어린이들을 공포에 떨게 한 전설. 학교 화장실, 골목길에 출몰한다는 노파 귀신.', img:'', runtime:0, keywords:['학교','고전','도시전설'], url:'https://namu.wiki/w/%ED%99%8D%EC%BD%A9%ED%95%A0%EB%A7%A4%20%EA%B7%80%EC%8B%A0'},
+    {fear:'귀신', media:'괴담글', title:'자유로 귀신', desc:'밤에 자유로를 달리다 히치하이킹을 요청하는 여자 귀신. 실제 목격담이 쏟아졌던 괴담.', img:'', runtime:0, keywords:['도시전설','실화기반'], url:'https://namu.wiki/w/%EC%9E%90%EC%9C%A0%EB%A1%9C%20%EA%B7%80%EC%8B%A0'},
+    {fear:'귀신', media:'괴담글', title:'화장실 귀신 (분홍신)', desc:'학교 화장실에 출몰하는 귀신 괴담. 한국 학교 괴담의 정수.', img:'', runtime:0, keywords:['학교','도시전설','고전'], url:'https://namu.wiki/w/%ED%99%94%EC%9E%A5%EC%8B%A4%20%EA%B4%B4%EB%8B%B4'},
+    {fear:'사람', media:'괴담글', title:'김민지 괴담', desc:'천원짜리 지폐 속 숨겨진 얼굴. 한국인이라면 한 번쯤 들어본 국민 도시전설.', img:'', runtime:0, keywords:['도시전설','고전'], url:'https://namu.wiki/w/%EA%B9%80%EB%AF%BC%EC%A7%80%20%EA%B4%B4%EB%8B%B4'},
+    {fear:'사람', media:'괴담글', title:'진시황은 살아있습니까?', desc:'괴미챈 역대 명작. 끝까지 읽으면 소름이 돋는 장편 서사 괴담. 분량이 방대하지만 끊을 수가 없다.', img:'', runtime:0, keywords:['장편','명작','반전'], url:'https://arca.live/b/spooky/26431127'},
+    {fear:'알 수 없는 존재', media:'괴담글', title:'리얼', desc:'괴미챈 역대 명작 창작 괴담. 수 시간이 걸리는 초장편. 현실과 괴담의 경계를 허무는 압도적인 밀도.', img:'', runtime:0, keywords:['장편','명작'], url:'https://arca.live/b/spooky/22335583?mode=best&target=all&keyword=%EB%A6%AC%EC%96%BC&p=2'},
+    {fear:'알 수 없는 존재', media:'괴담글', title:'원숭이 손', desc:'소원을 들어주는 원숭이 손. 이루어지는 소원 뒤에 따라오는 것. 한국 인터넷 괴담 고전 중의 고전.', img:'', runtime:0, keywords:['고전','도시전설'], url:'https://namu.wiki/w/%EC%9B%90%EC%88%AD%EC%9D%B4%20%EC%86%90'},
+    {fear:'알 수 없는 존재', media:'괴담글', title:'나폴리탄 괴담', desc:'설명되지 않는 규칙들이 주는 기괴한 공포. 나폴리탄 장르의 원형.', img:'', runtime:0, keywords:['도시전설','해외'], url:'https://namu.wiki/w/%EB%82%98%ED%8F%B4%EB%A6%AC%ED%83%84%20%EA%B4%B4%EB%8B%B4'},
+    {fear:'알 수 없는 존재', media:'괴담글', title:'키사라기역', desc:'존재하지 않는 역에 도착한 여자의 실시간 게시글. 일본 인터넷 괴담의 전설적인 명작.', img:'', runtime:0, keywords:['해외','명작','반전','도시전설'], url:'https://namu.wiki/w/%ED%82%A4%EC%82%AC%EB%9D%BC%EA%B8%B0%EC%97%AD'},
+    {fear:'알 수 없는 존재', media:'괴담글', title:'소의 목', desc:'듣는 순간 공포에 질려 말을 잇지 못한다는 전설의 괴담. 내용을 아는 사람이 없다는 게 핵심.', img:'', runtime:0, keywords:['도시전설','해외'], url:'https://namu.wiki/w/%EC%86%8C%EC%9D%98%20%EB%AA%A9'},
+];
+
+// ══════════════════════════════════════════════
+// 광고 데이터 (가상 / 데모용)
+// 실제 서비스에서는 광고주가 직접 등록하는 항목입니다.
+// ══════════════════════════════════════════════
+const adDb = [
+    // 배너 광고 (메인 히어로 하단)
+    {
+        type: 'banner',
+        sponsor: '(주)쇼박스 배급',
+        title: '파묘',
+        copy: '묘를 파면 안 되는 이유가 있다. 2024년 한국 최고 흥행 오컬트 공포.',
+        cta: '지금 CGV에서 상영 중 →',
+        thumb: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?q=80&w=120',
+        genre: '영화',
+    },
+    {
+        type: 'banner',
+        sponsor: '민음사 출판',
+        title: '『나는 전설이다』 리처드 매드슨',
+        copy: '좀비 장르의 시초. 혼자 남은 인류 최후의 생존자, 그의 공포가 시작된다.',
+        cta: '온라인 서점 바로가기 →',
+        thumb: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?q=80&w=120',
+        genre: '책',
+    },
+    {
+        type: 'banner',
+        sponsor: 'Konami Digital',
+        title: 'Silent Hill 2 — Remake',
+        copy: '안개 속의 기억이 돌아온다. 리메이크로 재탄생한 역대 최고의 심리 공포.',
+        cta: 'PlayStation Store에서 구매 →',
+        thumb: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=120',
+        genre: '게임',
+    },
+    {
+        type: 'banner',
+        sponsor: 'Netflix Korea',
+        title: '기묘한 이야기 시즌 5',
+        copy: '마지막 시즌. 호킨스의 진실이 마침내 밝혀진다. 10월 공개 예정.',
+        cta: '넷플릭스에서 미리 보기 →',
+        thumb: 'https://images.unsplash.com/photo-1509248961158-e54f6934749c?q=80&w=120',
+        genre: '드라마',
+    },
+    {
+        type: 'banner',
+        sponsor: '네이버 웹툰',
+        title: '스위트홈 — 시즌 3 완결',
+        copy: '욕망이 괴물을 만든다. 한국 호러 웹툰의 정점, 완결편 공개.',
+        cta: '네이버 웹툰 무료 감상 →',
+        thumb: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=120',
+        genre: '웹툰',
+    },
+
+    // 장르 페이지 핀 광고 (카테고리 탭 최상단)
+    {
+        type: 'pin',
+        genres: ['영화'],
+        sponsor: '(주)NEW 배급',
+        title: '랑종',
+        desc: '태국 샤머니즘을 배경으로 한 극한의 빙의 공포. 나홍진 제작, 반종 피산다나쿤 감독.',
+        img: 'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?q=80&w=500',
+        cta: '왓챠에서 스트리밍',
+        keywords: ['태국호러', '빙의', '페이크다큐', '오컬트'],
+        fear: '귀신',
+    },
+    {
+        type: 'pin',
+        genres: ['드라마'],
+        sponsor: 'Paramount+ Korea',
+        title: '탈로스 원칙 2 — 드라마 시리즈',
+        desc: '인공지능이 깨닫는 존재의 공포. 시즌 1 전 세계 스트리밍 시작.',
+        img: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=500',
+        cta: 'Paramount+에서 보기',
+        keywords: ['SF공포', '심리공포', '실존주의', '명작'],
+        fear: '알 수 없는 존재',
+    },
+    {
+        type: 'pin',
+        genres: ['게임'],
+        sponsor: 'Capcom',
+        title: '레지던트 이블 9',
+        desc: '바이오하자드 시리즈 신작. 2025년 출시 예정. 사전 등록 시 특전 제공.',
+        img: 'https://images.unsplash.com/photo-1552820728-8b83bb6b773f?q=80&w=500',
+        cta: 'Steam 위시리스트 추가',
+        keywords: ['생존', '고어', '액션', '시리즈'],
+        fear: '귀신',
+    },
+    {
+        type: 'pin',
+        genres: ['웹툰/만화'],
+        sponsor: '카카오 웹툰',
+        title: '조각',
+        desc: '신체 절단을 소재로 한 극한의 공포 웹툰. 매주 금요일 업데이트.',
+        img: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=500',
+        cta: '카카오 웹툰 바로가기',
+        keywords: ['고어', '심리공포', '한국', '신체공포'],
+        fear: '사람',
+    },
+    {
+        type: 'pin',
+        genres: ['소설'],
+        sponsor: '황금가지 출판사',
+        title: '『스탠드』 스티븐 킹 완전판',
+        copy: '',
+        desc: '바이러스로 문명이 붕괴된 세계. 선과 악의 최후 대결. 1,500페이지 완전판 출간.',
+        img: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?q=80&w=500',
+        cta: '교보문고 구매',
+        keywords: ['스티븐킹', '포스트아포칼립스', '명작', '장편'],
+        fear: '알 수 없는 존재',
+    },
+    {
+        type: 'pin',
+        genres: ['괴담글'],
+        sponsor: '으스스 출판',
+        title: '괴담집 『밤의 목격자들』',
+        desc: '아카이브 괴담 커뮤니티 명작선 공식 출판. 온라인에서 읽었던 그 글들이 책으로.',
+        img: 'https://images.unsplash.com/photo-1509248961158-e54f6934749c?q=80&w=500',
+        cta: '알라딘에서 선주문',
+        keywords: ['명작', '실화', '도시전설', '앤솔로지'],
+        fear: '귀신',
+    },
+    {
+        type: 'pin',
+        genres: ['애니'],
+        sponsor: 'Crunchyroll Japan',
+        title: '요루와 네무레나이 (Yoru wa Nemurenai)',
+        desc: '수면 중 의식만 각성하는 기이한 현상을 그린 2024 신작 공포 애니메이션.',
+        img: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?q=80&w=500',
+        cta: 'Crunchyroll에서 무료 감상',
+        keywords: ['일본호러', '심리공포', '신작', '수면공포'],
+        fear: '알 수 없는 존재',
+    },
+];
+
+// 배너 광고 렌더
+function renderAdBanners() {
+    const banners = adDb.filter(a => a.type === 'banner');
+    const track = document.getElementById('ad-banner-track');
+    if (!track) return;
+    track.innerHTML = banners.map(ad => `
+        <div class="ad-banner-card" title="${ad.sponsor}">
+            <span class="ad-pill">광고</span>
+            <img class="ad-banner-thumb" src="${ad.thumb}" alt="${ad.title}"
+                 onerror="this.src='https://images.unsplash.com/photo-1509248961158-e54f6934749c?q=80&w=120'">
+            <div class="ad-banner-body">
+                <div class="ad-banner-sponsor">${ad.sponsor}</div>
+                <div class="ad-banner-title">${ad.title}</div>
+                <div class="ad-banner-copy">${ad.copy}</div>
+                <div class="ad-banner-cta">${ad.cta}</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// 해당 장르의 핀 광고 카드 HTML 생성
+function buildAdPinCard(ad) {
+    const posterUrl = ad.img || 'https://images.unsplash.com/photo-1509248961158-e54f6934749c?q=80&w=500';
+    const keywords = ad.keywords || [];
+    return `
+    <div class="gcard ad-pinned">
+        <div class="ad-pin-label"><span class="ad-pin-dot"></span>광고</div>
+        <div style="padding:2px 16px 6px; font-size:0.68rem; color:#5a2a2a; letter-spacing:.1em;">${ad.sponsor}</div>
+        <img class="gcard-poster" src="${posterUrl}"
+             onerror="this.src='https://images.unsplash.com/photo-1509248961158-e54f6934749c?q=80&w=500'"
+             alt="${ad.title}">
+        <div class="gcard-body">
+            <div class="gcard-title">${ad.title}</div>
+            <div class="gcard-desc">${ad.desc}</div>
+            <div class="gcard-keywords">
+                <span class="gcard-tag">#${ad.fear}</span>
+                ${keywords.map(k=>`<span class="gcard-tag">#${k}</span>`).join('')}
+            </div>
+            <div class="gcard-meta">
+                <span></span>
+                <div class="gcard-ott">
+                    <span style="font-size:0.75rem;color:#ff4a4a;border:1px solid #5a1a1a;padding:3px 10px;border-radius:4px;background:#1a0505;">${ad.cta} →</span>
+                </div>
+            </div>
+        </div>
+    </div>`;
+}
+
+// ── 선택된 키워드 상태 ──
+let selectedKeywords = new Set();
+
+function initKeywordTags() {
+    document.querySelectorAll('.kw-tag').forEach(tag => {
+        tag.addEventListener('click', () => {
+            const kw = tag.dataset.kw;
+            if (selectedKeywords.has(kw)) {
+                selectedKeywords.delete(kw);
+                tag.classList.remove('selected');
+            } else {
+                selectedKeywords.add(kw);
+                tag.classList.add('selected');
+            }
+            updateKeywordHint();
+        });
+    });
+}
+
+function updateKeywordHint() {
+    const hint = document.getElementById('kw-hint');
+    const count = selectedKeywords.size;
+    if (count === 0) {
+        hint.textContent = '';
+    } else {
+        const list = [...selectedKeywords].map(k => `#${k}`).join(' ');
+        hint.textContent = `${list} — 선택한 키워드 ${count}개 적용`;
+    }
+}
+
+function clearKeywords() {
+    selectedKeywords.clear();
+    document.querySelectorAll('.kw-tag').forEach(t => t.classList.remove('selected'));
+    updateKeywordHint();
+}
+
+function formatRuntime(media, runtime) {
+    if (runtime === 0) return null;
+    if (media === '드라마' || media === '애니') return `에피소드당 약 ${runtime}분`;
+    if (media === '게임') {
+        const h = Math.floor(runtime / 60), m = runtime % 60;
+        if (h === 0) return `예상 플레이타임 약 ${m}분`;
+        if (m === 0) return `예상 플레이타임 약 ${h}시간`;
+        return `예상 플레이타임 약 ${h}시간 ${m}분`;
+    }
+    const h = Math.floor(runtime / 60), m = runtime % 60;
+    if (h === 0) return `러닝타임 ${m}분`;
+    if (m === 0) return `러닝타임 ${h}시간`;
+    return `러닝타임 ${h}시간 ${m}분`;
+}
+
+function goToPage(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(pageId).classList.add('active');
+    window.scrollTo(0, 0);
+}
+
+const GENRE_LABEL = {
+    '영화':'호러 영화','드라마':'드라마 / 시리즈','애니':'애니메이션 호러',
+    '게임':'공포 게임','웹툰/만화':'웹툰 / 만화','괴담글':'괴담글','소설':'호러 소설',
+};
+
+function mediaToGenre(media) {
+    if (media === '웹툰' || media === '만화') return '웹툰/만화';
+    if (media === '책') return '소설';
+    return media;
+}
+
+async function goToGenre(genre) {
+    document.getElementById('genre-page-title').textContent = GENRE_LABEL[genre] || genre;
+    document.getElementById('genre-list').innerHTML = `<p class="genre-loading">파일 검색 중...</p>`;
+    goToPage('genre-page');
+
+    const API_KEY = '984b5929728291d17c453a65f3280815';
+    const items = db.filter(x => mediaToGenre(x.media) === genre);
+
+    const cards = await Promise.all(items.map(async (item) => {
+        let posterUrl = item.img || '';
+        let rating = null;
+        let otts = [];
+        const tmdbMedia = ['영화','드라마','애니'].includes(item.media);
+
+        if (tmdbMedia && !posterUrl) {
+            try {
+                const q = encodeURIComponent(item.title.replace(/\s*\(.*?\)/g,'').trim());
+                const searchRes = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${API_KEY}&query=${q}&language=ko-KR`);
+                const searchData = await searchRes.json();
+                if (searchData.results && searchData.results.length > 0) {
+                    const match = searchData.results.find(r => r.poster_path) || searchData.results[0];
+                    if (match.poster_path) posterUrl = `https://image.tmdb.org/t/p/w500${match.poster_path}`;
+                    if (match.vote_average) rating = match.vote_average.toFixed(1);
+                    const mid = match.id;
+                    const mtype = match.media_type === 'movie' ? 'movie' : 'tv';
+                    try {
+                        const provRes = await fetch(`https://api.themoviedb.org/3/${mtype}/${mid}/watch/providers?api_key=${API_KEY}`);
+                        const provData = await provRes.json();
+                        const kr = provData.results && provData.results.KR;
+                        if (kr) { const flat = kr.flatrate || kr.free || kr.ads || []; otts = flat.slice(0,4).map(p => p.provider_name); }
+                    } catch(e){}
+                }
+            } catch(e){}
+        } else if (tmdbMedia && posterUrl) {
+            try {
+                const q = encodeURIComponent(item.title.replace(/\s*\(.*?\)/g,'').trim());
+                const searchRes = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${API_KEY}&query=${q}&language=ko-KR`);
+                const searchData = await searchRes.json();
+                if (searchData.results && searchData.results.length > 0) {
+                    const match = searchData.results[0];
+                    if (match.vote_average) rating = match.vote_average.toFixed(1);
+                    const mid = match.id, mtype = match.media_type === 'movie' ? 'movie' : 'tv';
+                    try {
+                        const provRes = await fetch(`https://api.themoviedb.org/3/${mtype}/${mid}/watch/providers?api_key=${API_KEY}`);
+                        const provData = await provRes.json();
+                        const kr = provData.results && provData.results.KR;
+                        if (kr) { const flat = kr.flatrate || kr.free || kr.ads || []; otts = flat.slice(0,4).map(p => p.provider_name); }
+                    } catch(e){}
+                }
+            } catch(e){}
+        }
+
+        if (!posterUrl) posterUrl = 'https://images.unsplash.com/photo-1509248961158-e54f6934749c?q=80&w=500';
+        const runtimeLabel = formatRuntime(item.media, item.runtime);
+        const keywords = item.keywords || [];
+
+        return `
+        <div class="gcard">
+            <img class="gcard-poster" src="${posterUrl}" onerror="this.src='https://images.unsplash.com/photo-1509248961158-e54f6934749c?q=80&w=500'" alt="${item.title}">
+            <div class="gcard-body">
+                <div class="gcard-title">${item.title}</div>
+                <div class="gcard-desc">${item.desc}</div>
+                <div class="gcard-keywords">
+                    <span class="gcard-tag">#${item.fear}</span>
+                    ${keywords.map(k=>`<span class="gcard-tag">#${k}</span>`).join('')}
+                </div>
+                <div class="gcard-meta">
+                    <span class="gcard-rating">${rating ? `★ ${rating}` : runtimeLabel ? `⏱ ${runtimeLabel}` : ''}</span>
+                    <div class="gcard-ott">
+                        ${item.url ? `<a href="${item.url}" target="_blank" style="font-size:0.75rem;color:#ff4a4a;border:1px solid #5a1a1a;padding:3px 10px;border-radius:4px;text-decoration:none;background:#1a0505;transition:.2s;" onmouseover="this.style.background='#2d0909'" onmouseout="this.style.background='#1a0505'">읽으러 가기 →</a>` : otts.length ? otts.map(o=>`<span class="ott-badge">${o}</span>`).join('') : '<span style="color:#555;font-size:0.75rem;">OTT 정보 없음</span>'}
+                    </div>
+                </div>
+                ${rating && runtimeLabel ? `<p style="color:#555;font-size:0.75rem;text-align:right;margin-top:4px;">⏱ ${runtimeLabel}</p>` : ''}
+            </div>
+        </div>`;
+    }));
+
+    // 해당 장르 핀 광고 맨 앞에 삽입
+    const pinAds = adDb.filter(a => a.type === 'pin' && a.genres.includes(genre));
+    const pinHtml = pinAds.map(buildAdPinCard).join('');
+
+    document.getElementById('genre-list').innerHTML = cards.length
+        ? pinHtml + cards.join('')
+        : pinHtml || `<p class="genre-loading">등록된 작품이 없습니다.</p>`;
+}
+
+async function fetchPoster(pick, API_KEY) {
+    if (pick.img && pick.img !== '') return pick.img;
+    try {
+        const query = encodeURIComponent(pick.title.replace(/\s*\(.*?\)/g,'').trim());
+        const response = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${API_KEY}&query=${query}&language=ko-KR`);
+        const data = await response.json();
+        if (data.results && data.results.length > 0) {
+            const match = data.results.find(r => r.poster_path);
+            if (match) return `https://image.tmdb.org/t/p/w500${match.poster_path}`;
+        }
+    } catch (e) {}
+    return 'https://images.unsplash.com/photo-1509248961158-e54f6934749c?q=80&w=500';
+}
+
+let sliderIndex = 0;
+let sliderTotal = 0;
+
+function moveSlide(dir) {
+    sliderIndex = (sliderIndex + dir + sliderTotal) % sliderTotal;
+    document.querySelector('.slider-track').style.transform = `translateX(-${sliderIndex * 100}%)`;
+    document.querySelector('.slide-counter').textContent = `${sliderIndex + 1} / ${sliderTotal}`;
+    setTimeout(() => {
+        const bar = document.querySelector(`.slide-fill-${sliderIndex}`);
+        if (bar && (bar.style.width === '0px' || bar.style.width === '')) {
+            bar.style.width = bar.dataset.width + '%';
+        }
+    }, 50);
+}
+
+async function recommendWork() {
+    const API_KEY = '984b5929728291d17c453a65f3280815';
+    const fear = document.getElementById('fear').value;
+    const media = document.getElementById('media').value;
+    const scare = document.getElementById('scare').value;
+    const minRuntime = parseInt(document.getElementById('runtime').value);
+    const kwArr = [...selectedKeywords];
+
+    const runtimeExempt = ['책','웹툰','만화','괴담글'];
+
+    // 키워드 매칭 점수 계산
+    function kwScore(item) {
+        if (kwArr.length === 0) return 1;
+        return kwArr.filter(kw => (item.keywords || []).includes(kw)).length;
+    }
+
+    let pool = db.filter(x => {
+        const fearOk = fear === 'any' || x.fear === fear;
+        const mediaOk = media === 'any' || x.media === media;
+        const rtOk = runtimeExempt.includes(x.media) || minRuntime === 0 || x.runtime >= minRuntime;
+        // 키워드가 선택된 경우 최소 1개 이상 매칭되어야 함
+        const kwOk = kwArr.length === 0 || kwScore(x) > 0;
+        return fearOk && mediaOk && rtOk && kwOk;
+    });
+
+    if (!pool.length) pool = db;
+
+    // 키워드 매칭 점수 내림차순 → 동점은 랜덤 셔플
+    pool = pool
+        .map(x => ({ item: x, score: kwScore(x), rand: Math.random() }))
+        .sort((a, b) => b.score - a.score || b.rand - a.rand)
+        .map(x => x.item);
+
+    const picks = pool.slice(0, Math.min(3, pool.length));
+    sliderTotal = picks.length;
+    sliderIndex = 0;
+
+    const scareValue = scare === '가볍게' ? 35 : scare === '무섭게' ? 70 : scare === '극한으로' ? 98 : Math.floor(Math.random() * 60) + 30;
+
+    document.getElementById('result').innerHTML = `<p style="color:#888;text-align:center;margin:16px 0;">파일 추출 중...</p>`;
+
+    const slides = await Promise.all(picks.map(async (pick, i) => {
+        const posterUrl = await fetchPoster(pick, API_KEY);
+        const runtimeLabel = formatRuntime(pick.media, pick.runtime);
+        const danger = Math.min(99, scareValue + (i === 0 ? 0 : Math.floor(Math.random() * 15) - 7));
+
+        // 선택 키워드 중 이 작품에 매칭된 것들 표시
+        const matchedKws = kwArr.filter(kw => (pick.keywords || []).includes(kw));
+        const matchBadges = matchedKws.length > 0
+            ? `<p style="text-align:center;margin:8px 0 2px;">${matchedKws.map(k=>`<span class="kw-match-badge">#${k}</span>`).join('')}</p>`
+            : '';
+
+        return `
+        <div class="slide">
+            <h4>${pick.title}</h4>
+            ${matchBadges}
+            <div class="poster-container">
+                <span class="media-tag">${pick.media}</span>
+                <img class="poster" src="${posterUrl}" onerror="this.src='https://images.unsplash.com/photo-1509248961158-e54f6934749c?q=80&w=500'" alt="${pick.title}">
+            </div>
+            <div class="meter"><div class="fill slide-fill-${i}" data-width="${danger}"></div></div>
+            <p style="color:#ffb3b3;font-weight:bold;text-align:center;">위험 등급 ${danger}%</p>
+            ${runtimeLabel ? `<p style="color:#888;font-size:0.85rem;text-align:center;margin:6px 0;">⏱ ${runtimeLabel}</p>` : ''}
+            <p style="padding:0 15px;">${pick.desc}</p>
+            <p class="meta">#${pick.fear} #${pick.media}</p>
+            ${pick.url ? `<div style="text-align:center;margin-top:12px;"><a href="${pick.url}" target="_blank" style="display:inline-block;padding:8px 20px;border:1px solid #5a1a1a;color:#ff4a4a;background:#1a0505;border-radius:6px;text-decoration:none;font-size:0.85rem;">읽으러 가기 →</a></div>` : ''}
+        </div>`;
+    }));
+
+    document.getElementById('result').innerHTML = `
+        <div class="slider-wrap">
+            <div class="slider-track">${slides.join('')}</div>
+        </div>
+        ${picks.length > 1 ? `
+        <div class="slider-nav">
+            <button class="slider-btn" onclick="moveSlide(-1)">← 이전</button>
+            <span class="slide-counter">1 / ${picks.length}</span>
+            <button class="slider-btn" onclick="moveSlide(1)">다음 →</button>
+        </div>` : ''}
+    `;
+
+    setTimeout(() => {
+        const bar = document.querySelector('.slide-fill-0');
+        if (bar) bar.style.width = bar.dataset.width + '%';
+    }, 100);
+}
+
+// 페이지 초기화
+initKeywordTags();
+renderAdBanners();
+</script>
+
+</body>
+</html>
